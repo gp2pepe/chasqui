@@ -1,0 +1,30 @@
+app-id: dev.chasqui.apiclient
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: chasqui
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --share=network
+  - --filesystem=home
+  - --talk-name=org.freedesktop.secrets
+
+modules:
+  - name: chasqui
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 chasqui /app/bin/chasqui
+      - install -Dm644 dev.chasqui.apiclient.desktop /app/share/applications/dev.chasqui.apiclient.desktop
+      - install -Dm644 dev.chasqui.apiclient.metainfo.xml /app/share/metainfo/dev.chasqui.apiclient.metainfo.xml
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.chasqui.apiclient.png
+    sources:
+      - type: file
+        path: ../../src-tauri/target/release/chasqui
+      - type: file
+        path: dev.chasqui.apiclient.desktop
+      - type: file
+        path: dev.chasqui.apiclient.metainfo.xml
+      - type: file
+        path: ../../src-tauri/icons/icon.png

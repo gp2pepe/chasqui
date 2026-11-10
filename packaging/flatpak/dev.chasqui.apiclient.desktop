@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Chasqui
+Comment=100% Local & Git-Friendly API Client
+Exec=chasqui
+Icon=dev.chasqui.apiclient
+Terminal=false
+Type=Application
+Categories=Development;WebDevelopment;
+StartupWMClass=chasqui

@@ -1,0 +1,23 @@
+name: chasqui
+base: core24
+version: '0.1.0'
+summary: Chasqui — Cliente API 100% Local y Git-Friendly
+description: |
+  Alternativa open source y ultraligera a Postman construida con Tauri v2 (Rust).
+  Guarda tus colecciones en archivos TOML limpios para Git/GitLab, protege tus
+  API keys en un Vault encriptado con AES-256-GCM y Argon2id, e incluye probador
+  de carga y latencia (N peticiones concurrentes).
+
+grade: stable
+confinement: classic
+
+apps:
+  chasqui:
+    command: usr/bin/chasqui
+    desktop: usr/share/applications/Chasqui.desktop
+
+parts:
+  chasqui:
+    plugin: dump
+    source: src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb
+    source-type: deb

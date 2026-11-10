@@ -1,0 +1,28 @@
+[package]
+name = "chasqui"
+version = "0.1.0"
+description = "Chasqui — Local & Git-Friendly API Client with Encrypted Secret Vault"
+authors = ["Chasqui Contributors"]
+edition = "2021"
+
+[lib]
+name = "chasqui_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "cookies"] }
+tokio = { version = "1.40", features = ["full"] }
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+base64 = "0.22"
+keyring = "3.6"
+dirs = "5.0"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.chasqui.apiclient</id>
+  <name>Chasqui</name>
+  <summary>100% Local &amp; Git-Friendly API Client</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      Chasqui es un cliente API 100% local, rápido y amigable con Git/GitLab,
+      con soporte para archivos TOML, Vault encriptado con AES-256-GCM y pruebas de carga.
+    </p>
+  </description>
+  <launchable type="desktop-id">dev.chasqui.apiclient.desktop</launchable>
+  <releases>
+    <release version="0.1.0" date="2026-11-10"/>
+  </releases>
+</component>

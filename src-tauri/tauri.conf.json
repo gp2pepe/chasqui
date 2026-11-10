@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Chasqui",
+  "version": "0.1.0",
+  "identifier": "dev.chasqui.apiclient",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Chasqui — Local & Git-Friendly API Client",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage", "msi", "nsis"],
+    "category": "DeveloperTool",
+    "shortDescription": "Chasqui — Local & Git-Friendly API Client",
+    "longDescription": "Cliente API 100% local y ligero compatible con Git/GitLab, archivos TOML y Vault de secretos encriptado con AES-256-GCM.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
