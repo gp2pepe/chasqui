@@ -21,6 +21,8 @@ chasqui-data/
 *.snap
 *.flatpak
 dist-deb/
+build-*.sh
+
 
 # Screenshots
 capturas/
