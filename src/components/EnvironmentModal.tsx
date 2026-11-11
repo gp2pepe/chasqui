@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Globe, Plus, Trash2, Save, X } from "lucide-react";
 import type { EnvironmentFile } from "../types";
+import { useI18n } from "../i18n";
 
 interface EnvironmentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  environments: EnvironmentFile[];
-  activeEnvName: string | null;
-  onSaveEnvironment: (envFile: EnvironmentFile) => Promise<void>;
-  onDeleteEnvironment: (name: string) => Promise<void>;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly environments: readonly EnvironmentFile[];
+  readonly activeEnvName: string | null;
+  readonly onSaveEnvironment: (envFile: EnvironmentFile) => Promise<void>;
+  readonly onDeleteEnvironment: (name: string) => Promise<void>;
 }
 
 interface EnvVarRow {
@@ -32,6 +33,7 @@ export const EnvironmentModal: React.FC<EnvironmentModalProps> = ({
   onSaveEnvironment,
   onDeleteEnvironment,
 }) => {
+  const { t } = useI18n();
   const [selectedName, setSelectedName] = useState<string>("dev");
   const [newEnvName, setNewEnvName] = useState<string>("");
   const [rows, setRows] = useState<EnvVarRow[]>([createEnvRow()]);
@@ -48,153 +50,214 @@ export const EnvironmentModal: React.FC<EnvironmentModalProps> = ({
   const selectEnv = (name: string) => {
     setSelectedName(name);
     const found = environments.find((e) => String(e.name) === name);
-    if (found) {
-      const entries = Object.entries(found.variables).map(([k, v]) =>
+    if (found && found.variables) {
+      const parsedRows = Object.entries(found.variables).map(([k, v]) =>
         createEnvRow(k, v)
       );
-      setRows(entries.length > 0 ? entries : [createEnvRow()]);
+      setRows(parsedRows.length > 0 ? parsedRows : [createEnvRow()]);
     } else {
-      setRows([createEnvRow("base_url", "https://httpbin.org")]);
+      setRows([createEnvRow()]);
     }
+    setSavedNotice(false);
   };
 
   if (!isOpen) return null;
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddRow = () => {
+    setRows([...rows, createEnvRow()]);
+  };
+
+  const handleRemoveRow = (id: string) => {
+    setRows(rows.filter((r) => r.rowId !== id));
+  };
+
+  const handleRowChange = (
+    id: string,
+    field: "key" | "value",
+    val: string
+  ) => {
+    setRows(
+      rows.map((r) => (r.rowId === id ? { ...r, [field]: val } : r))
+    );
+  };
+
+  const handleCreateEnvironment = () => {
+    const clean = newEnvName.trim().replaceAll(/[^a-zA-Z0-9_-]/g, "");
+    if (!clean) return;
+    onSaveEnvironment({
+      name: clean,
+      variables: {},
+    });
+    setNewEnvName("");
+    selectEnv(clean);
+  };
+
+  const handleSaveCurrentEnv = async () => {
     const variables: Record<string, string> = {};
     for (const r of rows) {
-      if (r.key.trim()) variables[r.key.trim()] = r.value;
+      if (r.key.trim()) {
+        variables[r.key.trim()] = r.value;
+      }
     }
     await onSaveEnvironment({
       name: selectedName,
       variables,
     });
     setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 1600);
+    setTimeout(() => setSavedNotice(false), 2000);
   };
 
-  const handleCreateNewEnv = async () => {
-    const clean = newEnvName.trim().replaceAll(/[^a-zA-Z0-9_-]/g, "");
-    if (!clean) return;
-    await onSaveEnvironment({
-      name: clean,
-      variables: { base_url: "https://api.ejemplo.com" },
-    });
-    setNewEnvName("");
-    selectEnv(clean);
+  const handleDeleteCurrentEnv = async () => {
+    if (environments.length <= 1) return;
+    await onDeleteEnvironment(selectedName);
+    const remaining = environments.filter((e) => String(e.name) !== selectedName);
+    if (remaining.length > 0) {
+      selectEnv(String(remaining[0].name));
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4 bg-slate-950/60">
+      <div className="w-full max-w-3xl rounded-xl border border-slate-700 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col text-slate-900 dark:text-slate-100">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6 py-4 bg-slate-50 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-500/20">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-100">
-                Editor de Entornos y Variables (environments/*.toml)
+              <h2 className="text-base font-semibold">
+                {t("env_modal.title")}
               </h2>
-              <p className="text-xs text-slate-400">
-                Usa tus variables en URL, Headers o Body como{" "}
-                <code className="text-sky-300">{`{{base_url}}`}</code>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t("env_modal.subtitle")}
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1.5">
+        {/* Content */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Environments Sidebar */}
+          <div className="w-48 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-3 space-y-2 flex flex-col">
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-2">
+              Archivos .toml
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-1">
               {environments.map((env) => {
-                const envName = String(env.name);
+                const isSelected = String(env.name) === selectedName;
+                const isActive = String(env.name) === activeEnvName;
                 return (
                   <button
-                    key={envName}
+                    key={String(env.name)}
                     type="button"
-                    onClick={() => selectEnv(envName)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${
-                      selectedName === envName
-                        ? "bg-sky-500/20 border-sky-500/40 text-sky-300"
-                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                    onClick={() => selectEnv(String(env.name))}
+                    className={`w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-left transition ${
+                      isSelected
+                        ? "bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200"
                     }`}
                   >
-                    {envName}.toml
+                    <span className="truncate">{String(env.name)}.toml</span>
+                    {isActive && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-sky-500/20 text-sky-600 dark:text-sky-300">
+                        {t("env_modal.active")}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex items-center gap-1.5">
+            {/* Create new env */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
               <input
                 type="text"
                 value={newEnvName}
                 onChange={(e) => setNewEnvName(e.target.value)}
-                placeholder="Nuevo (ej. prod)"
-                aria-label="Nombre del nuevo entorno"
-                className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1 text-xs text-slate-100 w-36"
+                placeholder={t("env_modal.new_env_placeholder")}
+                className="w-full rounded border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 py-1 text-xs text-slate-900 dark:text-slate-200 focus:outline-none"
               />
               <button
                 type="button"
-                onClick={handleCreateNewEnv}
-                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 text-xs text-slate-200"
+                onClick={handleCreateEnvironment}
+                disabled={!newEnvName.trim()}
+                className="w-full rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-700 dark:text-slate-300 py-1 text-xs font-medium"
               >
-                <Plus className="w-3.5 h-3.5" />
-                Crear
+                {t("env_modal.create_env_btn")}
               </button>
             </div>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3">
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+          {/* Variables Table */}
+          <div className="flex-1 flex flex-col p-6 overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">
+                  {selectedName}.toml
+                </span>
+                <span className="text-xs text-slate-500">
+                  ({rows.filter((r) => r.key.trim()).length} variables)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {environments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteCurrentEnv}
+                    className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600 px-2 py-1 rounded hover:bg-rose-500/10"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{t("env_modal.delete")}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSaveCurrentEnv}
+                  className="flex items-center gap-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 px-3 py-1.5 text-xs font-semibold"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>
+                    {savedNotice
+                      ? t("env_modal.saved")
+                      : t("env_modal.save_env_btn")}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {rows.map((row) => (
-                <div key={row.rowId} className="flex gap-2">
+                <div key={row.rowId} className="flex items-center gap-2">
                   <input
                     type="text"
                     value={row.key}
-                    onChange={(e) => {
-                      setRows(
-                        rows.map((item) =>
-                          item.rowId === row.rowId
-                            ? { ...item, key: e.target.value }
-                            : item
-                        )
-                      );
-                    }}
-                    placeholder="Variable (ej. base_url)"
-                    aria-label="Nombre de variable"
-                    className="w-1/3 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-mono text-sky-300"
+                    onChange={(e) =>
+                      handleRowChange(row.rowId, "key", e.target.value)
+                    }
+                    placeholder={t("env_modal.var_key_placeholder")}
+                    className="w-1/3 rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none"
                   />
                   <input
                     type="text"
                     value={row.value}
-                    onChange={(e) => {
-                      setRows(
-                        rows.map((item) =>
-                          item.rowId === row.rowId
-                            ? { ...item, value: e.target.value }
-                            : item
-                        )
-                      );
-                    }}
-                    placeholder="Valor (ej. https://api.midominio.com)"
-                    aria-label="Valor de variable"
-                    className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-mono text-slate-100"
+                    onChange={(e) =>
+                      handleRowChange(row.rowId, "value", e.target.value)
+                    }
+                    placeholder={t("env_modal.var_val_placeholder")}
+                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-1.5 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none"
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      setRows(rows.filter((item) => item.rowId !== row.rowId))
-                    }
-                    className="px-2 text-slate-500 hover:text-rose-400"
+                    onClick={() => handleRemoveRow(row.rowId)}
+                    className="p-1.5 text-slate-400 hover:text-rose-500"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -202,41 +265,17 @@ export const EnvironmentModal: React.FC<EnvironmentModalProps> = ({
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setRows([...rows, createEnvRow()])}
-                className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                onClick={handleAddRow}
+                className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
               >
-                <Plus className="w-3.5 h-3.5" /> Agregar Variable
+                <Plus className="w-3.5 h-3.5" />
+                <span>{t("env_modal.add_var_btn")}</span>
               </button>
-
-              <div className="flex items-center gap-2">
-                {environments.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await onDeleteEnvironment(selectedName);
-                    }}
-                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs text-rose-300"
-                  >
-                    Eliminar {selectedName}.toml
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-4 py-1.5 text-xs"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>
-                    {savedNotice
-                      ? "¡Guardado!"
-                      : `Guardar ${selectedName}.toml`}
-                  </span>
-                </button>
-              </div>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
