@@ -27,8 +27,8 @@
     "active": true,
     "targets": ["deb", "appimage", "msi", "nsis"],
     "category": "DeveloperTool",
-    "shortDescription": "Chasqui — Local & Git-Friendly API Client",
-    "longDescription": "Cliente API 100% local y ligero compatible con Git/GitLab, archivos TOML y Vault de secretos encriptado con AES-256-GCM.",
+    "shortDescription": "Chasqui — 100% Local & Git-Friendly API Client",
+    "longDescription": "Ultra-lightweight, 100% local, and Git-native desktop API client developed with Antigravity. Features TOML collections, AES-256-GCM encrypted vault, concurrent load testing, and cURL tools.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

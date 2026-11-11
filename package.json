@@ -2,7 +2,7 @@
   "name": "chasqui",
   "private": true,
   "version": "0.1.0",
-  "description": "Cliente API 100% local, rápido y Git-friendly con Vault de secretos encriptado",
+  "description": "Ultra-lightweight, 100% local, and Git-friendly desktop API client developed with Antigravity",
   "type": "module",
   "scripts": {
     "dev": "vite",

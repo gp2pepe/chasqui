@@ -25,4 +25,9 @@ dist-deb/
 # Screenshots
 capturas/
 
+# Sonar analysis files & scanner work
+.scannerwork/
+*sonar*
+
+
 

@@ -7,8 +7,13 @@
   <project_license>MIT</project_license>
   <description>
     <p>
-      Chasqui es un cliente API 100% local, rápido y amigable con Git/GitLab,
-      con soporte para archivos TOML, Vault encriptado con AES-256-GCM y pruebas de carga.
+      Chasqui is an ultra-lightweight, 100% local, and Git-native desktop API client
+      built with Tauri v2 (Rust) and React, developed using Antigravity.
+    </p>
+    <p>
+      It stores requests as clean, version-controlled TOML files, secures credentials
+      in a local AES-256-GCM encrypted vault with Argon2id, and provides built-in concurrent
+      load testing, cURL import/export, and Git repository synchronization.
     </p>
   </description>
   <launchable type="desktop-id">dev.chasqui.apiclient.desktop</launchable>
