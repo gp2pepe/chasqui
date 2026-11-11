@@ -9,15 +9,42 @@ description: |
   and features concurrent load/latency testing, cURL import/export, and Git sync.
 
 grade: stable
-confinement: classic
+confinement: strict
 
 apps:
   chasqui:
     command: usr/bin/chasqui
     desktop: usr/share/applications/Chasqui.desktop
+    extensions: [ gnome ]
+    plugs:
+      - home
+      - network
+      - network-bind
+      - password-manager-service
 
 parts:
   chasqui:
     plugin: dump
     source: src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb
     source-type: deb
+    stage-packages:
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libwayland-server0
+      - libx11-6
+      - libxext6
+      - libxdamage1
+      - libxfixes3
+      - libxcb1
+      - libxcb-shm0
+      - libx11-xcb1
+      - libxau6
+      - libxdmcp6
+      - libxres1
+      - libgl1
+      - libegl1
+      - libglx0
+      - libgldispatch0
+      - libgbm1
+      - libxml2
