@@ -3,10 +3,35 @@
 @tailwind utilities;
 
 @layer base {
-  /* Reglas fijas para solucionar dropdowns nativos (<select> y <option>) que aparecen blancos */
+  /* 
+   * En WebKit / GTK en Linux, los elementos <select> nativos renderizan un control
+   * de formulario con fondo blanco del tema GTK por defecto si no tienen appearance: none
+   * o si no se anulan todos sus estilos nativos.
+   * Con -webkit-appearance: none y appearance: none forzamos el renderizado web estilizable.
+   */
+  select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: none !important;
+  }
+
+  html.dark select {
+    background-color: #020617 !important; /* slate-950 */
+    color: #f8fafc !important;            /* slate-50 */
+    border-color: #1e293b !important;     /* slate-800 */
+  }
+
   html.dark select option {
     background-color: #0f172a !important; /* slate-900 */
     color: #f8fafc !important;            /* slate-50 */
+  }
+
+  html.light select,
+  html:not(.dark) select {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;     /* slate-300 */
   }
 
   html.light select option,

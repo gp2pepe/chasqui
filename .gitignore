@@ -22,3 +22,7 @@ chasqui-data/
 *.flatpak
 dist-deb/
 
+# Screenshots
+capturas/
+
+

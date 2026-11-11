@@ -169,27 +169,30 @@ function TopNavbar({
       <div className="flex items-center gap-2">
         {/* Environment selector */}
         {workspaceInfo && (
-          <div className="flex items-center rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs overflow-hidden">
+          <div className="flex items-center rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-xs overflow-hidden">
             <div className="flex items-center gap-1.5 px-2.5 py-1">
               <Globe className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
               <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">
                 {t("nav.environment")}
               </span>
-              <select
-                value={workspaceInfo.config.active_environment || "dev"}
-                onChange={(e) => onChangeActiveEnvironment(e.target.value)}
-                className="bg-transparent font-medium text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
-              >
-                {workspaceInfo.environments.map((env) => (
-                  <option
-                    key={String(env.name)}
-                    value={String(env.name)}
-                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-                  >
-                    {String(env.name)}.toml
-                  </option>
-                ))}
-              </select>
+              <div className="relative flex items-center">
+                <select
+                  value={workspaceInfo.config.active_environment || "dev"}
+                  onChange={(e) => onChangeActiveEnvironment(e.target.value)}
+                  className="bg-transparent font-medium text-slate-800 dark:text-slate-100 pr-4 focus:outline-none cursor-pointer appearance-none"
+                >
+                  {workspaceInfo.environments.map((env) => (
+                    <option
+                      key={String(env.name)}
+                      value={String(env.name)}
+                      className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                    >
+                      {String(env.name)}.toml
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-0" />
+              </div>
             </div>
             <button
               type="button"
@@ -203,24 +206,27 @@ function TopNavbar({
         )}
 
         {/* Language Selector (Auto-discovered locales) */}
-        <div className="flex items-center rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2 py-1 text-xs">
-          <Languages className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 mr-1.5" />
-          <select
-            value={locale}
-            onChange={(e) => setLocale(e.target.value)}
-            className="bg-transparent font-medium text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
-            aria-label={t("nav.language")}
-          >
-            {availableLocales.map((loc) => (
-              <option
-                key={loc.code}
-                value={loc.code}
-                className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
-              >
-                {loc.flag ? `${loc.flag} ` : ""}{loc.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 py-1 text-xs">
+          <Languages className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 mr-1.5 shrink-0" />
+          <div className="relative flex items-center">
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+              className="bg-transparent font-medium text-slate-800 dark:text-slate-100 pr-4 focus:outline-none cursor-pointer appearance-none"
+              aria-label={t("nav.language")}
+            >
+              {availableLocales.map((loc) => (
+                <option
+                  key={loc.code}
+                  value={loc.code}
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                >
+                  {loc.flag ? `${loc.flag} ` : ""}{loc.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-0" />
+          </div>
         </div>
 
         {/* Theme Toggle (Sun / Moon) */}
@@ -755,22 +761,25 @@ function RequestBuilderPanel({
 
         <div className="flex gap-2">
           {/* Method Dropdown */}
-          <select
-            value={activeReq.method}
-            onChange={(e) =>
-              onChangeActiveReq({
-                ...activeReq,
-                method: e.target.value as ApiRequest["method"],
-              })
-            }
-            className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 focus:border-amber-500 focus:outline-none cursor-pointer"
-          >
-            <option value="GET" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">GET</option>
-            <option value="POST" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">POST</option>
-            <option value="PUT" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">PUT</option>
-            <option value="PATCH" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">PATCH</option>
-            <option value="DELETE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">DELETE</option>
-          </select>
+          <div className="relative flex items-center">
+            <select
+              value={activeReq.method}
+              onChange={(e) =>
+                onChangeActiveReq({
+                  ...activeReq,
+                  method: e.target.value as ApiRequest["method"],
+                })
+              }
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 pl-3 pr-7 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 focus:border-amber-500 focus:outline-none cursor-pointer appearance-none"
+            >
+              <option value="GET" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">GET</option>
+              <option value="POST" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">POST</option>
+              <option value="PUT" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">PUT</option>
+              <option value="PATCH" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">PATCH</option>
+              <option value="DELETE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold">DELETE</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 pointer-events-none absolute right-2" />
+          </div>
 
           <input
             type="text"

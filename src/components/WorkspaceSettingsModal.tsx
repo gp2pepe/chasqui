@@ -12,6 +12,7 @@ import {
   KeyRound,
   AlertTriangle,
   RotateCcw,
+  ChevronDown,
 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { GitStatusInfo, WorkspaceConfig } from "../types";
@@ -381,21 +382,24 @@ export const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({
                     <KeyRound className="w-3 h-3 text-amber-500" />
                     <span>{t("settings.vault_token_select")}</span>
                   </label>
-                  <select
-                    id="ws-vault-token-select"
-                    value={authTokenSecretKey}
-                    onChange={(e) => setAuthTokenSecretKey(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 cursor-pointer"
-                  >
-                    <option value="" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-                      {t("settings.no_vault_token")}
-                    </option>
-                    {secretKeys.map((k) => (
-                      <option key={k} value={k} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-                        Vault: {k}
+                  <div className="relative flex items-center">
+                    <select
+                      id="ws-vault-token-select"
+                      value={authTokenSecretKey}
+                      onChange={(e) => setAuthTokenSecretKey(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 pl-3 pr-8 py-1.5 text-xs text-slate-900 dark:text-slate-100 cursor-pointer appearance-none"
+                    >
+                      <option value="" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                        {t("settings.no_vault_token")}
                       </option>
-                    ))}
-                  </select>
+                      {secretKeys.map((k) => (
+                        <option key={k} value={k} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                          Vault: {k}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5" />
+                  </div>
                 </div>
                 <div>
                   <label
