@@ -1,0 +1,85 @@
+name: chasqui
+base: core24
+version: '0.1.0'
+summary: Chasqui — 100% Local & Git-Friendly API Client
+description: |
+  Ultra-lightweight, 100% local, and Git-native desktop API client built with
+  Tauri v2 (Rust), React, and Antigravity. Stores request collections in version-controlled
+  TOML files, secures API keys in an AES-256-GCM encrypted local vault with Argon2id,
+  and features concurrent load/latency testing, cURL import/export, and Git sync.
+
+grade: stable
+confinement: strict
+
+apps:
+  chasqui:
+    command: usr/bin/chasqui
+    desktop: usr/share/applications/Chasqui.desktop
+    extensions: [ gnome ]
+    plugs:
+      - home
+      - network
+      - network-bind
+      - password-manager-service
+
+parts:
+  chasqui:
+    plugin: nil
+    source: .
+    build-packages:
+      - libwebkit2gtk-4.1-dev
+      - build-essential
+      - curl
+      - wget
+      - file
+      - libxdo-dev
+      - libssl-dev
+      - libayatana-appindicator3-dev
+      - librsvg2-dev
+      - libgtk-3-dev
+      - libsoup-3.0-dev
+      - javascriptcoregtk-4.1-dev
+    stage-packages:
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libwayland-server0
+      - libx11-6
+      - libxext6
+      - libxdamage1
+      - libxfixes3
+      - libxcb1
+      - libxcb-shm0
+      - libx11-xcb1
+      - libxau6
+      - libxdmcp6
+      - libxres1
+      - libgl1
+      - libegl1
+      - libglx0
+      - libgldispatch0
+      - libgbm1
+      - libxml2
+    override-build: |
+      if [ -f src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb ]; then
+        dpkg-deb -x src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb "${CRAFT_PART_INSTALL}"
+      elif [ -f src-tauri/target/release/chasqui ]; then
+        install -D -m 755 src-tauri/target/release/chasqui "${CRAFT_PART_INSTALL}/usr/bin/chasqui"
+        install -D -m 644 packaging/flatpak/dev.chasqui.apiclient.desktop "${CRAFT_PART_INSTALL}/usr/share/applications/Chasqui.desktop"
+        install -D -m 644 src-tauri/icons/icon.png "${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/512x512/apps/chasqui.png"
+      else
+        if ! command -v node >/dev/null 2>&1; then
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y nodejs
+        fi
+        if ! command -v cargo >/dev/null 2>&1; then
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+        fi
+        npm ci
+        npm run build
+        cargo build --release --manifest-path src-tauri/Cargo.toml
+        install -D -m 755 src-tauri/target/release/chasqui "${CRAFT_PART_INSTALL}/usr/bin/chasqui"
+        install -D -m 644 packaging/flatpak/dev.chasqui.apiclient.desktop "${CRAFT_PART_INSTALL}/usr/share/applications/Chasqui.desktop"
+        install -D -m 644 src-tauri/icons/icon.png "${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/512x512/apps/chasqui.png"
+      fi
