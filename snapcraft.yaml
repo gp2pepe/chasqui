@@ -57,7 +57,7 @@ parts:
       - libgl1
       - libegl1
       - libglx0
-      - libgldispatch0
+      - libglvnd0
       - libgbm1
       - libxml2
     override-build: |
