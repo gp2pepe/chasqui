@@ -29,11 +29,19 @@ import {
   Sun,
   Moon,
   Languages,
+  HelpCircle,
+  ExternalLink,
+  Bug,
+  MessageSquarePlus,
+  ArrowUpCircle,
+  RefreshCw,
 } from "lucide-react";
 import { chasquiApi } from "./api";
 import type {
   ApiRequest,
+  AppDiagnostics,
   HttpExecutionResult,
+  LatestReleaseInfo,
   WorkspaceStatusInfo,
 } from "./types";
 import { VaultModal } from "./components/VaultModal";
@@ -61,6 +69,43 @@ export interface KeyValueRow {
 
 type RequestEditorTab = "headers" | "params" | "body" | "auth";
 type ResponseViewerTab = "body" | "headers" | "info" | "benchmark";
+
+interface SavedTabsState {
+  openTabIds: string[];
+  activeTabId: string | null;
+}
+
+const getTabsStorageKey = (workspaceDir: string) =>
+  `chasqui_open_tabs:${workspaceDir}`;
+
+const loadSavedTabsState = (workspaceDir: string): SavedTabsState | null => {
+  try {
+    const raw = localStorage.getItem(getTabsStorageKey(workspaceDir));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedTabsState>;
+    if (!Array.isArray(parsed.openTabIds)) return null;
+    return {
+      openTabIds: parsed.openTabIds.filter(
+        (id): id is string => typeof id === "string"
+      ),
+      activeTabId:
+        typeof parsed.activeTabId === "string" ? parsed.activeTabId : null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveTabsState = (workspaceDir: string, state: SavedTabsState) => {
+  try {
+    localStorage.setItem(
+      getTabsStorageKey(workspaceDir),
+      JSON.stringify(state)
+    );
+  } catch {
+    // Ignorar fallos de localStorage en sandbox
+  }
+};
 
 let kvRowCounter = 0;
 function createKvRow(key = "", value = "", enabled = true): KeyValueRow {
@@ -107,6 +152,27 @@ function getStatusBadgeClass(status: number): string {
   return "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30";
 }
 
+const REPO_URL = "https://github.com/gp2pepe/chasqui";
+
+function isNewerVersion(latestTag: string, currentVersion: string): boolean {
+  const parse = (v: string) =>
+    v
+      .replace(/^v/i, "")
+      .split("-")[0]
+      .split(".")
+      .map((n) => Number.parseInt(n, 10) || 0);
+  const a = parse(latestTag);
+  const b = parse(currentVersion);
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const av = a[i] ?? 0;
+    const bv = b[i] ?? 0;
+    if (av > bv) return true;
+    if (av < bv) return false;
+  }
+  return false;
+}
+
 function getResponseTextToCopy(
   response: HttpExecutionResult,
   responseTab: ResponseViewerTab,
@@ -142,6 +208,62 @@ function TopNavbar({
 }: TopNavbarProps) {
   const { t, locale, availableLocales, setLocale } = useI18n();
   const { theme, toggleTheme } = useTheme();
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<AppDiagnostics | null>(null);
+  const [latestRelease, setLatestRelease] = useState<LatestReleaseInfo | null>(
+    null
+  );
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [upToDateNotice, setUpToDateNotice] = useState(false);
+  const helpMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    chasquiApi.getAppDiagnostics().then(setDiagnostics).catch(() => {});
+    chasquiApi
+      .checkLatestRelease()
+      .then((rel) => {
+        if (rel) setLatestRelease(rel);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        helpMenuRef.current &&
+        !helpMenuRef.current.contains(e.target as Node)
+      ) {
+        setHelpOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [helpOpen]);
+
+  const currentVersion = diagnostics?.version || "0.1.0";
+  const hasUpdate =
+    latestRelease !== null &&
+    isNewerVersion(latestRelease.tag_name, currentVersion);
+
+  const envSummary = diagnostics
+    ? `Chasqui v${diagnostics.version} | ${diagnostics.os} ${diagnostics.arch} (${diagnostics.package_type})`
+    : `Chasqui v${currentVersion}`;
+
+  const handleManualUpdateCheck = async () => {
+    setCheckingUpdates(true);
+    setUpToDateNotice(false);
+    const rel = await chasquiApi.checkLatestRelease();
+    setCheckingUpdates(false);
+    if (rel) {
+      setLatestRelease(rel);
+      if (isNewerVersion(rel.tag_name, currentVersion)) {
+        return;
+      }
+    }
+    setUpToDateNotice(true);
+    setTimeout(() => setUpToDateNotice(false), 3000);
+  };
 
   return (
     <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/80 backdrop-blur px-4 py-2 transition-colors">
@@ -291,6 +413,119 @@ function TopNavbar({
           <FolderGit2 className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
           <span className="hidden sm:inline">{t("nav.workspace_git")}</span>
         </button>
+
+        {/* Update Available Badge */}
+        {hasUpdate && latestRelease && (
+          <button
+            type="button"
+            onClick={() => chasquiApi.openExternalUrl(latestRelease.html_url)}
+            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 transition"
+            title={t("nav.update_available", {
+              version: latestRelease.tag_name,
+            })}
+          >
+            <ArrowUpCircle className="w-3.5 h-3.5" />
+            <span>{latestRelease.tag_name}</span>
+          </button>
+        )}
+
+        {/* GitHub & Feedback Menu */}
+        <div className="relative" ref={helpMenuRef}>
+          <button
+            type="button"
+            onClick={() => setHelpOpen((prev) => !prev)}
+            className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition"
+            title={t("nav.github_feedback")}
+            aria-label={t("nav.github_feedback")}
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
+          {helpOpen && (
+            <div className="absolute right-0 mt-1.5 w-64 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg py-1 z-50 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setHelpOpen(false);
+                  chasquiApi.openExternalUrl(REPO_URL);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                <span className="flex items-center gap-2">
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  {t("nav.open_repo")}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setHelpOpen(false);
+                  const url = `${REPO_URL}/issues/new?template=bug_report.yml&environment=${encodeURIComponent(envSummary)}`;
+                  chasquiApi.openExternalUrl(url);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                <Bug className="w-3.5 h-3.5 text-rose-500" />
+                <span>{t("nav.report_bug")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setHelpOpen(false);
+                  const url = `${REPO_URL}/issues/new?template=feature_request.yml&environment=${encodeURIComponent(envSummary)}`;
+                  chasquiApi.openExternalUrl(url);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5 text-amber-500" />
+                <span>{t("nav.request_feature")}</span>
+              </button>
+
+              <div className="my-1 border-t border-slate-200 dark:border-slate-800" />
+
+              {hasUpdate && latestRelease ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHelpOpen(false);
+                    chasquiApi.openExternalUrl(latestRelease.html_url);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-emerald-600 dark:text-emerald-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <ArrowUpCircle className="w-3.5 h-3.5" />
+                  <span>
+                    {t("nav.update_available", {
+                      version: latestRelease.tag_name,
+                    })}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleManualUpdateCheck}
+                  disabled={checkingUpdates}
+                  className="w-full flex items-center justify-between px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-60"
+                >
+                  <span className="flex items-center gap-2">
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 text-sky-500 ${checkingUpdates ? "animate-spin" : ""}`}
+                    />
+                    {checkingUpdates
+                      ? t("nav.checking_updates")
+                      : upToDateNotice
+                        ? t("nav.up_to_date")
+                        : t("nav.check_updates")}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    v{currentVersion}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -1414,8 +1649,24 @@ function MainAppContent() {
     setSecretKeys(sKeys);
 
     if (reqList.length > 0) {
-      setOpenTabIds([reqList[0].id]);
-      selectRequest(reqList[0]);
+      const saved = loadSavedTabsState(info.workspace_dir);
+      const reqById = new Map(reqList.map((r) => [r.id, r]));
+      const restoredTabIds = saved
+        ? saved.openTabIds.filter((id) => reqById.has(id))
+        : [];
+
+      if (restoredTabIds.length > 0) {
+        const targetId =
+          saved?.activeTabId && restoredTabIds.includes(saved.activeTabId)
+            ? saved.activeTabId
+            : restoredTabIds[0];
+        const targetReq = reqById.get(targetId) || reqList[0];
+        setOpenTabIds(restoredTabIds);
+        selectRequest(targetReq);
+      } else {
+        setOpenTabIds([reqList[0].id]);
+        selectRequest(reqList[0]);
+      }
     } else {
       handleCreateNewRequest();
     }
@@ -1424,6 +1675,14 @@ function MainAppContent() {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (!workspaceInfo?.workspace_dir || openTabIds.length === 0) return;
+    saveTabsState(workspaceInfo.workspace_dir, {
+      openTabIds,
+      activeTabId: activeReq?.id ?? null,
+    });
+  }, [workspaceInfo?.workspace_dir, openTabIds, activeReq?.id]);
 
   const buildCurrentRequestObject = (): ApiRequest | null => {
     if (!activeReq) return null;

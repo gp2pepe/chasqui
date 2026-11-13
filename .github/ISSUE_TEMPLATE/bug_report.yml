@@ -1,0 +1,32 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Chasqui
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Open Chasqui
+        2. Click on '...'
+        3. See error
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Auto-filled when opened from Chasqui (App version, OS, architecture, package format).
+      placeholder: "Chasqui v0.1.0 | linux x86_64 (snap)"

@@ -7,6 +7,8 @@ import type {
   LoadTestResult,
   WorkspaceConfig,
   WorkspaceStatusInfo,
+  AppDiagnostics,
+  LatestReleaseInfo,
 } from "./types";
 
 const isTauriRuntime = (): boolean =>
@@ -186,6 +188,37 @@ export const chasquiApi = {
       inlineToken: inlineToken || null,
       forceOverwrite: forceOverwrite ?? false,
     });
+  },
+
+  async getAppDiagnostics(): Promise<AppDiagnostics> {
+    if (!isTauriRuntime()) {
+      return {
+        version: "0.1.0",
+        os: "browser",
+        arch: "web",
+        package_type: "browser",
+      };
+    }
+    return invoke<AppDiagnostics>("get_app_diagnostics");
+  },
+
+  async checkLatestRelease(): Promise<LatestReleaseInfo | null> {
+    if (!isTauriRuntime()) {
+      return null;
+    }
+    try {
+      return await invoke<LatestReleaseInfo>("check_latest_release");
+    } catch {
+      return null;
+    }
+  },
+
+  async openExternalUrl(url: string): Promise<void> {
+    if (!isTauriRuntime()) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    return invoke<void>("open_external_url", { url });
   },
 };
 

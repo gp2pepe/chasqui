@@ -417,6 +417,87 @@ fn git_pull_workspace(
     Ok(msg)
 }
 
+#[derive(serde::Serialize)]
+pub struct AppDiagnostics {
+    pub version: String,
+    pub os: String,
+    pub arch: String,
+    pub package_type: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct LatestReleaseInfo {
+    pub tag_name: String,
+    pub html_url: String,
+    pub published_at: Option<String>,
+}
+
+#[tauri::command]
+fn get_app_diagnostics() -> AppDiagnostics {
+    let package_type = if std::env::var_os("SNAP").is_some() {
+        "snap"
+    } else if std::env::var_os("FLATPAK_ID").is_some() {
+        "flatpak"
+    } else if std::env::var_os("APPIMAGE").is_some() {
+        "appimage"
+    } else {
+        "native"
+    };
+
+    AppDiagnostics {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        package_type: package_type.to_string(),
+    }
+}
+
+#[tauri::command]
+async fn check_latest_release() -> Result<LatestReleaseInfo, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get("https://api.github.com/repos/gp2pepe/chasqui/releases/latest")
+        .header(
+            reqwest::header::USER_AGENT,
+            format!("chasqui/{}", env!("CARGO_PKG_VERSION")),
+        )
+        .header(reqwest::header::ACCEPT, "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API status: {}", resp.status()));
+    }
+
+    resp.json::<LatestReleaseInfo>()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    let trimmed = url.trim();
+    if !trimmed.starts_with("https://") && !trimmed.starts_with("http://") {
+        return Err("Only http/https URLs are allowed".to_string());
+    }
+
+    #[cfg(target_os = "linux")]
+    let res = std::process::Command::new("xdg-open").arg(trimmed).spawn();
+    #[cfg(target_os = "macos")]
+    let res = std::process::Command::new("open").arg(trimmed).spawn();
+    #[cfg(target_os = "windows")]
+    let res = std::process::Command::new("cmd")
+        .args(["/C", "start", "", trimmed])
+        .spawn();
+
+    res.map(|_| ()).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -442,7 +523,10 @@ pub fn run() {
             git_status,
             git_init,
             git_sync_workspace,
-            git_pull_workspace
+            git_pull_workspace,
+            get_app_diagnostics,
+            check_latest_release,
+            open_external_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,0 +1,17 @@
+name: Feature Request / Feedback
+description: Suggest an idea, improvement, or share general feedback about Chasqui
+title: "[Feedback]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see or improve?
+      description: Describe your idea, use case, or general feedback.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment (optional)
+      placeholder: "Chasqui v0.1.0 | linux x86_64"

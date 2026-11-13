@@ -16,6 +16,9 @@ apps:
     command: usr/bin/chasqui
     desktop: usr/share/applications/Chasqui.desktop
     extensions: [ gnome ]
+    environment:
+      WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+      WEBKIT_DISABLE_COMPOSITING_MODE: '1'
     plugs:
       - home
       - network
@@ -60,14 +63,25 @@ parts:
       - libglvnd0
       - libgbm1
       - libxml2
+      - libicu74
     override-build: |
+      USE_PREBUILT=0
       if [ -f src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb ]; then
-        dpkg-deb -x src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb "${CRAFT_PART_INSTALL}"
+        dpkg-deb -x src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb /tmp/deb-check
+        if ! ldd /tmp/deb-check/usr/bin/chasqui 2>/dev/null | grep -q "not found"; then
+          dpkg-deb -x src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb "${CRAFT_PART_INSTALL}"
+          USE_PREBUILT=1
+        fi
+        rm -rf /tmp/deb-check
       elif [ -f src-tauri/target/release/chasqui ]; then
-        install -D -m 755 src-tauri/target/release/chasqui "${CRAFT_PART_INSTALL}/usr/bin/chasqui"
-        install -D -m 644 packaging/flatpak/dev.chasqui.apiclient.desktop "${CRAFT_PART_INSTALL}/usr/share/applications/Chasqui.desktop"
-        install -D -m 644 src-tauri/icons/icon.png "${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/512x512/apps/chasqui.png"
-      else
+        if ! ldd src-tauri/target/release/chasqui 2>/dev/null | grep -q "not found"; then
+          install -D -m 755 src-tauri/target/release/chasqui "${CRAFT_PART_INSTALL}/usr/bin/chasqui"
+          install -D -m 644 packaging/flatpak/dev.chasqui.apiclient.desktop "${CRAFT_PART_INSTALL}/usr/share/applications/Chasqui.desktop"
+          install -D -m 644 src-tauri/icons/icon.png "${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/512x512/apps/chasqui.png"
+          USE_PREBUILT=1
+        fi
+      fi
+      if [ "$USE_PREBUILT" -eq 0 ]; then
         if ! command -v node >/dev/null 2>&1; then
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
           apt-get install -y nodejs

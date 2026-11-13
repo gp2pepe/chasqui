@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Chasqui Repository & Documentation
+    url: https://github.com/gp2pepe/chasqui
+    about: Browse source code, releases, and documentation

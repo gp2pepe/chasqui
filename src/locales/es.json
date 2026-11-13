@@ -14,7 +14,15 @@
     "workspace_git": "Workspace & Git",
     "toggle_theme_dark": "Cambiar a modo oscuro",
     "toggle_theme_light": "Cambiar a modo claro",
-    "language": "Idioma"
+    "language": "Idioma",
+    "github_feedback": "GitHub y Feedback",
+    "open_repo": "Repositorio en GitHub",
+    "report_bug": "Reportar Bug (con info del sistema)",
+    "request_feature": "Sugerir Mejora / Feedback",
+    "check_updates": "Buscar actualizaciones",
+    "checking_updates": "Buscando...",
+    "up_to_date": "Actualizado",
+    "update_available": "Nueva versión disponible: {version}"
   },
   "sidebar": {
     "collections_title": "Colecciones (.toml)",

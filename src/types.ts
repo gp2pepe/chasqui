@@ -92,3 +92,16 @@ export interface GitStatusInfo {
   user_email: string | null;
   last_commit: string | null;
 }
+
+export interface AppDiagnostics {
+  version: string;
+  os: string;
+  arch: string;
+  package_type: string;
+}
+
+export interface LatestReleaseInfo {
+  tag_name: string;
+  html_url: string;
+  published_at: string | null;
+}
