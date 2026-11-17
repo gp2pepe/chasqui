@@ -19,6 +19,9 @@ apps:
     environment:
       WEBKIT_DISABLE_DMABUF_RENDERER: '1'
       WEBKIT_DISABLE_COMPOSITING_MODE: '1'
+      GIT_EXEC_PATH: $SNAP/usr/lib/git-core
+      GIT_TEMPLATE_DIR: $SNAP/usr/share/git-core/templates
+      GIT_SSL_CAINFO: /etc/ssl/certs/ca-certificates.crt
     plugs:
       - home
       - network
@@ -64,6 +67,7 @@ parts:
       - libgbm1
       - libxml2
       - libicu74
+      - git
     override-build: |
       USE_PREBUILT=0
       if [ -f src-tauri/target/release/bundle/deb/Chasqui_0.1.0_amd64.deb ]; then
@@ -91,8 +95,7 @@ parts:
           source "$HOME/.cargo/env"
         fi
         npm ci
-        npm run build
-        cargo build --release --manifest-path src-tauri/Cargo.toml
+        npm run tauri -- build --no-bundle
         install -D -m 755 src-tauri/target/release/chasqui "${CRAFT_PART_INSTALL}/usr/bin/chasqui"
         install -D -m 644 packaging/flatpak/dev.chasqui.apiclient.desktop "${CRAFT_PART_INSTALL}/usr/share/applications/Chasqui.desktop"
         install -D -m 644 src-tauri/icons/icon.png "${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/512x512/apps/chasqui.png"
