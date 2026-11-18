@@ -1975,6 +1975,33 @@ function MainAppContent() {
 
       {workspaceInfo && (
         <>
+          <WorkspaceSettingsModal
+            isOpen={settingsModalOpen}
+            onClose={() => setSettingsModalOpen(false)}
+            workspaceDir={workspaceInfo.workspace_dir}
+            config={workspaceInfo.config}
+            secretKeys={secretKeys}
+            vaultUnlocked={workspaceInfo.vault_unlocked}
+            onChangeWorkspaceDir={async (newDir) => {
+              const updated = await chasquiApi.setWorkspaceDir(newDir);
+              setWorkspaceInfo(updated);
+              const reqs = await chasquiApi.listRequests();
+              setRequests(reqs);
+              const keys = await chasquiApi.listSecretKeys();
+              setSecretKeys(keys);
+            }}
+            onUpdateConfig={async (newCfg) => {
+              const updated = await chasquiApi.updateWorkspaceConfig(newCfg);
+              setWorkspaceInfo(updated);
+            }}
+            onSaveTokenToVault={async (k, v) => {
+              const keys = await chasquiApi.setSecret(k, v);
+              setSecretKeys(keys);
+            }}
+            onReloadWorkspaceData={loadInitialData}
+            onOpenVaultModal={() => setVaultModalOpen(true)}
+          />
+
           <VaultModal
             isOpen={vaultModalOpen}
             onClose={() => setVaultModalOpen(false)}
@@ -2001,32 +2028,6 @@ function MainAppContent() {
               const keys = await chasquiApi.deleteSecret(k);
               setSecretKeys(keys);
             }}
-          />
-
-          <WorkspaceSettingsModal
-            isOpen={settingsModalOpen}
-            onClose={() => setSettingsModalOpen(false)}
-            workspaceDir={workspaceInfo.workspace_dir}
-            config={workspaceInfo.config}
-            secretKeys={secretKeys}
-            vaultUnlocked={workspaceInfo.vault_unlocked}
-            onChangeWorkspaceDir={async (newDir) => {
-              const updated = await chasquiApi.setWorkspaceDir(newDir);
-              setWorkspaceInfo(updated);
-              const reqs = await chasquiApi.listRequests();
-              setRequests(reqs);
-              const keys = await chasquiApi.listSecretKeys();
-              setSecretKeys(keys);
-            }}
-            onUpdateConfig={async (newCfg) => {
-              const updated = await chasquiApi.updateWorkspaceConfig(newCfg);
-              setWorkspaceInfo(updated);
-            }}
-            onSaveTokenToVault={async (k, v) => {
-              const keys = await chasquiApi.setSecret(k, v);
-              setSecretKeys(keys);
-            }}
-            onReloadWorkspaceData={loadInitialData}
           />
 
           {currentBuiltRequest && (

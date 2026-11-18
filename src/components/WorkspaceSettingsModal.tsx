@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   RotateCcw,
   ChevronDown,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { GitStatusInfo, WorkspaceConfig } from "../types";
@@ -30,6 +32,7 @@ interface WorkspaceSettingsModalProps {
   readonly onUpdateConfig: (newConfig: WorkspaceConfig) => Promise<void>;
   readonly onSaveTokenToVault: (key: string, value: string) => Promise<void>;
   readonly onReloadWorkspaceData: () => Promise<void>;
+  readonly onOpenVaultModal: () => void;
 }
 
 export const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({
@@ -43,6 +46,7 @@ export const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({
   onUpdateConfig,
   onSaveTokenToVault,
   onReloadWorkspaceData,
+  onOpenVaultModal,
 }) => {
   const { t } = useI18n();
   const [dirInput, setDirInput] = useState(workspaceDir);
@@ -418,6 +422,27 @@ export const WorkspaceSettingsModal: React.FC<WorkspaceSettingsModalProps> = ({
                   />
                 </div>
               </div>
+
+              {!vaultUnlocked ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                    {t("settings.vault_locked_token_hint")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onOpenVaultModal}
+                    className="rounded-md bg-amber-500 hover:bg-amber-600 text-white font-semibold px-2.5 py-1 transition shrink-0"
+                  >
+                    {t("settings.unlock_vault_btn")}
+                  </button>
+                </div>
+              ) : (
+                <p className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
+                  <Unlock className="w-3 h-3 shrink-0" />
+                  <span>{t("settings.vault_unlocked_token_hint")}</span>
+                </p>
+              )}
             </div>
 
             {/* Secret Policy */}

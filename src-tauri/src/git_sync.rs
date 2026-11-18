@@ -3,13 +3,34 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+fn git_binary() -> std::path::PathBuf {
+    if let Some(snap) = std::env::var_os("SNAP") {
+        let snap_git = std::path::PathBuf::from(snap).join("usr/bin/git");
+        if snap_git.exists() {
+            return snap_git;
+        }
+    }
+    std::path::PathBuf::from("git")
+}
+
 fn run_git(workspace_dir: &Path, args: &[&str]) -> Result<String, String> {
-    let output = Command::new("git")
-        .args(args)
+    let mut cmd = Command::new(git_binary());
+    cmd.args(args)
         .current_dir(workspace_dir)
         // Evitar que git se cuelgue esperando un prompt de terminal interactivo en entorno gráfico
         .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GCM_INTERACTIVE", "never")
+        .env("GCM_INTERACTIVE", "never");
+
+    // En Snap (confinement: strict), AppArmor bloquea /etc/gitconfig y ~/.gitconfig
+    if std::env::var_os("SNAP").is_some() {
+        cmd.env("GIT_CONFIG_NOSYSTEM", "1")
+            .env("GIT_CONFIG_GLOBAL", "/dev/null")
+            .env("GIT_CONFIG_COUNT", "1")
+            .env("GIT_CONFIG_KEY_0", "safe.directory")
+            .env("GIT_CONFIG_VALUE_0", "*");
+    }
+
+    let output = cmd
         .output()
         .map_err(|e| format!("No se pudo ejecutar git: {e}"))?;
 
@@ -110,15 +131,16 @@ pub fn apply_git_config_to_repo(
         return Ok(());
     }
 
-    let _ = Command::new("git")
-        .args([
+    let _ = run_git(
+        workspace_dir,
+        &[
             "config",
             "--global",
             "--add",
             "safe.directory",
             &workspace_dir.to_string_lossy(),
-        ])
-        .output();
+        ],
+    );
 
     if let Some(ref name) = git_cfg.user_name {
         if !name.trim().is_empty() {
