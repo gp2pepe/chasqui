@@ -1,5 +1,15 @@
 # Chasqui — 100% Local & Git-Friendly API Client
+<div align="center">
+  <p><strong>A modern, lightweight, and intuitive desktop client for testing and debugging WebSockets.</strong></p>
 
+  <a href="https://snapcraft.io/chasqui">
+    <img alt="chasqui" src="https://snapcraft.io/chasqui/badge.svg" />
+  </a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=466MCJP4MFND4" target="_blank">
+    <img alt="Donate with PayPal" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" />
+  </a>
+</div>
+<br>
 <div align="center">
   <img src="public/logo_chasqui.png" alt="Chasqui Logo" width="128" height="128" />
   <h3>Modern, ultra-lightweight, 100% local, and Git-native desktop API client.</h3>
